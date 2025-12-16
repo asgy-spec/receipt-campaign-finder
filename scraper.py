@@ -9,7 +9,6 @@ except:
     print("❌ ライブラリエラー")
     exit(1)
 
-# ★絶対に生成されるデータ
 campaigns = [
     {
         "title": "コカ・コーラ 年末キャンペーン",
@@ -31,12 +30,10 @@ campaigns = [
 
 print(f"📊 生成データ数: {len(campaigns)}")
 
-# ★確実にファイル書き込み
 try:
     with open('campaigns.json', 'w', encoding='utf-8') as f:
         json.dump(campaigns, f, ensure_ascii=False, indent=2)
     
-    # ★ファイル確認
     with open('campaigns.json', 'r', encoding='utf-8') as f:
         content = f.read()
         print(f"✅ ファイル生成成功！サイズ: {len(content)}文字")
@@ -48,4 +45,3 @@ except Exception as e:
 
 print("🎉 完了！")
 
-    scrape_campaigns()
