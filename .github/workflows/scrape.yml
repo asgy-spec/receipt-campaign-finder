@@ -1,73 +1,43 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-import json
-import os
-from datetime import datetime
+name: Daily Scraper
 
-print("=== スクレイピング開始 ===")
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
-def scrape_campaigns():
-    print("テストデータを生成中...")
-    
-    # ★確実に生成されるデータ（日本語もOK）
-    campaigns = [
-        {
-            "title": "コカ・コーラ 年末キャンペーン",
-            "products": ["コカ・コーラ", "コーラ", "コカコーラ"],
-            "stores": ["全国スーパー", "コンビニ"],
-            "period": "2025-12-01〜2025-12-31",
-            "url": "https://www.coca-cola.co.jp/campaign",
-            "scraped_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        },
-        {
-            "title": "ポテトチップス お正月キャンペーン", 
-            "products": ["ポテチ", "ポテトチップス", "カラムーチョ"],
-            "stores": ["スーパー", "コンビニ"],
-            "period": "2025-12-15〜2026-01-15",
-            "url": "https://www.calbee.co.jp/campaign",
-            "scraped_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        },
-        {
-            "title": "オレンジジュース 冬のボーナスキャンペーン",
-            "products": ["オレンジジュース", "トロピカーナ"],
-            "stores": ["全国"],
-            "period": "2025-12-10〜2025-12-25",
-            "url": "https://www.tropicana.jp/campaign",
-            "scraped_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
-    ]
-    
-    print(f"生成するキャンペーン数: {len(campaigns)}")
-    
-    # ファイルパス確認
-    filepath = 'campaigns.json'
-    print(f"保存先: {os.getcwd()}/{filepath}")
-    
-    try:
-        # ★UTF-8で確実に書き込み
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(campaigns, f, ensure_ascii=False, indent=2)
-        
-        # ★ファイル確認
-        if os.path.exists(filepath):
-            size = os.path.getsize(filepath)
-            print(f"✅ campaigns.json 生成完了！サイズ: {size} bytes")
-            
-            # 中身を少し表示
-            with open(filepath, 'r', encoding='utf-8') as f:
-                preview = json.load(f)
-            print(f"📊 最初のキャンペーン: {preview[0]['title'] if preview else '空'}")
-        else:
-            print("❌ ファイルが生成されませんでした")
-            return False
-            
-    except Exception as e:
-        print(f"❌ エラー: {e}")
-        return False
-    
-    return True
-
-if __name__ == "__main__":
-    success = scrape_campaigns()
-    print("🎉 完了！" if success else "💥 失敗！")
-    exit(0)
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Run scraper
+        run: python scraper.py
+      
+      - name: List files
+        run: ls -la
+      
+      - name: Commit results
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add campaigns.json || true
+          git add . || true
+          echo "Status:"
+          git status
+          git diff --staged --quiet || git commit -m "Update campaigns $(date +%Y-%m-%d_%H:%M:%S)"
+          git push || echo "Push skipped"
