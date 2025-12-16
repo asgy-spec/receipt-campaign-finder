@@ -1,0 +1,33 @@
+name: Daily Scraper
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 毎日午前9時（日本時間）
+  workflow_dispatch:  # 手動実行用
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Run scraper
+        run: python scraper.py
+      
+      - name: Commit results
+        run: |
+          git config --local user.name "GitHub Actions"
+          git config --local user.email "actions@github.com"
+          git add campaigns.json
+          git commit -m "Update campaigns" || echo "No changes"
+          git push
